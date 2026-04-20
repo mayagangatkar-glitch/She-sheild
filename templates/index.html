@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SheShield</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a, #000);
+            color: white;
+            text-align: center;
+        }
+
+        .header {
+            padding: 20px;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .contacts input {
+            margin: 5px;
+            padding: 12px;
+            width: 80%;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+        }
+
+        .sos-btn {
+            margin-top: 40px;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff3b3b, #a80000);
+            color: white;
+            font-size: 26px;
+            font-weight: bold;
+            border: none;
+            box-shadow: 0 0 30px red;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px red; }
+            50% { box-shadow: 0 0 40px red; }
+            100% { box-shadow: 0 0 10px red; }
+        }
+
+        .status {
+            margin-top: 30px;
+            padding: 15px;
+        }
+
+        .card {
+            background: #1f1f1f;
+            margin: 10px;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        a {
+            color: #00e5ff;
+            text-decoration: none;
+        }
+
+        .call-btn {
+            display: block;
+            margin: 10px;
+            padding: 10px;
+            background: #333;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">🛡️ SheShield</div>
+
+    <div class="contacts">
+        <input id="c1" placeholder="Contact 1 (+91...)">
+        <input id="c2" placeholder="Contact 2 (+91...)">
+        <input id="c3" placeholder="Contact 3 (+91...)">
+    </div>
+
+    <button class="sos-btn" onclick="startSOS()">SOS</button>
+
+    <div id="status" class="status"></div>
+
+    <script>
+        let interval;
+
+        function getContacts() {
+            return [
+                c1.value,
+                c2.value,
+                c3.value
+            ].filter(c => c);
+        }
+
+        function startSOS() {
+            let contacts = getContacts();
+
+            if (contacts.length === 0) {
+                alert("Add at least one contact");
+                return;
+            }
+
+            document.getElementById("status").innerHTML =
+                "<div class='card'>🚨 SOS Activated...</div>";
+
+            navigator.geolocation.getCurrentPosition(pos => {
+                let lat = pos.coords.latitude;
+                let lon = pos.coords.longitude;
+
+                let location = `https://maps.google.com/?q=${lat},${lon}`;
+                let police = `https://www.google.com/maps/search/police+station+near+me/@${lat},${lon},15z`;
+
+                let message = `🚨 EMERGENCY!\nLocation: ${location}\nPolice: ${police}`;
+
+                contacts.forEach(contact => {
+                    let url = `https://wa.me/${contact.replace('+','')}?text=${encodeURIComponent(message)}`;
+                    window.open(url, '_blank');
+                });
+
+                let calls = contacts.map(c =>
+                    `<a class="call-btn" href="tel:${c}">📞 Call ${c}</a>`
+                ).join("");
+
+                document.getElementById("status").innerHTML = `
+                    <div class="card">
+                        📍 <a href="${location}" target="_blank">View Live Location</a>
+                    </div>
+
+                    <div class="card">
+                        🚓 <a href="${police}" target="_blank">Nearest Police</a>
+                    </div>
+
+                    <div class="card">
+                        ${calls}
+                    </div>
+                `;
+            });
+        }
+
+        // SHAKE DETECTION
+        let lastX, lastY, lastZ;
+        let threshold = 8;
+        let lastTime = 0;
+        window.addEventListener("devicemotion", function(e) {
+    alert("Motion detected");
+});
+
+        window.addEventListener("devicemotion", e => {
+            console.log("Motion detected");
+            let acc = e.accelerationIncludingGravity;
+            if (!acc) return;
+
+            let x = acc.x, y = acc.y, z = acc.z;
+
+            if (lastX !== undefined) {
+                let diff = Math.abs(x - lastX) + Math.abs(y - lastY) + Math.abs(z - lastZ);
+
+                if (diff > threshold) {
+                    let now = Date.now();
+                    if (now - lastTime > 3000) {
+                        lastTime = now;
+                        startSOS();
+                    }
+                }
+            }
+
+            lastX = x;
+            lastY = y;
+            lastZ = z;
+        });
+    </script>
+
+</body>
+</html>
